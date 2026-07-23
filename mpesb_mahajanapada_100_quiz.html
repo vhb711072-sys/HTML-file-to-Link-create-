@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPESB: महाजनपद काल - पूर्ण प्रश्नोत्तरी (100 प्रश्न)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; }
+        .header { background: #1a5f7a; color: white; }
+        .sidebar { background: #fff; height: fit-content; }
+        .btn-nav { background: #e2e8f0; color: #475569; }
+        .btn-nav.active { background: #1a5f7a; color: white; }
+        .btn-nav.answered { background: #22c55e; color: white; }
+        .option-label { cursor: pointer; transition: all 0.2s; border: 2px solid #e2e8f0; }
+        .option-input:checked + .option-label { border-color: #1a5f7a; background-color: #eef2ff; }
+        #timer { font-weight: bold; font-size: 1.2rem; color: #dc2626; }
+    </style>
+</head>
+<body class="p-2 md:p-4">
+
+<div class="max-w-7xl mx-auto">
+    <!-- Header Area -->
+    <div class="header p-4 flex flex-col md:flex-row justify-between items-center rounded-t-lg shadow-md mb-2">
+        <div>
+            <h1 class="text-xl font-bold">MPESB MPTET Varg 2 Subject Social Science</h1>
+            <p class="text-sm opacity-95">इकाई: महाजनपद काल (संपूर्ण 100 प्रश्न)</p>
+        </div>
+        <div class="bg-white text-black px-4 py-2 rounded shadow mt-2 md:mt-0">
+            समय शेष: <span id="timer">120:00</span>
+        </div>
+    </div>
+
+    <!-- Extra Control Bar (Language, Mode, Filters, Guide Book, Search) -->
+    <div class="bg-white p-3 rounded-b-lg shadow-md mb-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Language Selector -->
+            <select id="lang-select" onchange="changeLanguage(this.value)" class="border rounded px-2 py-1 bg-gray-50 text-gray-700 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="hi">हिंदी (Hindi)</option>
+                <option value="en">English</option>
+            </select>
+
+            <!-- Mode Selector -->
+            <button onclick="setMode('practice')" id="mode-practice-btn" class="px-3 py-1 bg-blue-600 text-white rounded font-medium shadow-sm transition">Practice Mode</button>
+            <button onclick="setMode('cbt')" id="mode-cbt-btn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded font-medium hover:bg-gray-300 transition">CBT Exam Mode</button>
+            
+            <!-- Solved Guide Book -->
+            <button onclick="toggleGuideBook()" class="px-3 py-1 bg-amber-500 text-white rounded font-medium hover:bg-amber-600 transition flex items-center gap-1">
+                <span>📖</span> Solved Guide Book
+            </button>
+
+            <!-- Question Grid Drawer / Quick Filter Toggle -->
+            <button onclick="toggleGridModal()" class="px-3 py-1 bg-indigo-600 text-white rounded font-medium hover:bg-indigo-700 transition flex items-center gap-1">
+                <span>🗂️</span> प्रश्न ग्रिड (Grid View)
+            </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Subject Filter -->
+            <select id="topic-filter" onchange="filterTopic(this.value)" class="border rounded px-2 py-1 bg-gray-50 text-gray-700 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="all">सभी भाग (All Sections)</option>
+                <option value="mahajanapada">भाग 1: महाजनपद एवं राजधानियाँ</option>
+                <option value="magadh">भाग 2: मगध साम्राज्य का उत्कर्ष</option>
+                <option value="society">भाग 3: सामाजिक, आर्थिक एवं प्रशासनिक</option>
+                <option value="foreign">भाग 4: विदेशी आक्रमण एवं विविध</option>
+            </select>
+
+            <!-- Question Search -->
+            <input type="text" id="search-input" oninput="searchQuestion(this.value)" placeholder="प्रश्न खोजें (Search)..." class="border rounded px-3 py-1 w-40 md:w-56 text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500">
+
+            <!-- Submit Exam Button in Header bar -->
+            <button onclick="showConfirm()" class="px-4 py-1 bg-red-600 text-white rounded font-bold hover:bg-red-700 transition shadow">Submit Exam</button>
+        </div>
+    </div>
+
+    <!-- Main Single Column Layout -->
+    <div class="max-w-4xl mx-auto">
+        <!-- Main Question Area -->
+        <div id="quiz-container" class="bg-white p-6 rounded-lg shadow-md min-h-[460px] relative">
+            <div id="question-view">
+                <!-- Dynamic Question Content -->
+            </div>
+            
+            <div class="mt-8 flex justify-between items-center border-t pt-4">
+                <button onclick="prevQuestion()" id="prev-btn" class="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50">पिछला</button>
+                <button onclick="saveAndNext()" id="next-btn" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">सहेजें और अगला</button>
+            </div>
+        </div>
+
+        <!-- Question Grid Section Added Below the Questions Area -->
+        <div class="bg-white p-6 rounded-lg shadow-md mt-4">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="font-bold text-indigo-900 text-lg">🗂️ संपूर्ण प्रश्न ग्रिड (Question Status Grid)</h3>
+                <div class="flex items-center gap-4 text-xs font-semibold">
+                    <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-green-500 rounded inline-block"></span> उत्तर दिया (<span id="inline-grid-stat-answered">0</span>)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-gray-200 border rounded inline-block"></span> अनुत्तरित (<span id="inline-grid-stat-unanswered">0</span>)</span>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">किसी भी प्रश्न संख्या पर क्लिक करके तुरंत उस प्रश्न पर जाएँ।</p>
+            <div id="inline-full-grid-container" class="grid grid-cols-5 sm:grid-cols-10 md:grid-cols-12 gap-2 p-1 max-h-[300px] overflow-y-auto">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Expanded Question Grid Drawer -->
+<div id="grid-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-3xl w-full p-6 max-h-[85vh] overflow-y-auto shadow-2xl relative">
+        <div class="flex justify-between items-center border-b pb-3 mb-4 sticky top-0 bg-white z-10">
+            <div>
+                <h2 class="text-xl font-bold text-indigo-900">🗂️ संपूर्ण प्रश्न ग्रिड (Question Status Grid)</h2>
+                <p class="text-xs text-gray-500 mt-1">किसी भी प्रश्न संख्या पर क्लिक करके तुरंत उस प्रश्न पर जाएँ।</p>
+            </div>
+            <button onclick="toggleGridModal()" class="text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        </div>
+        
+        <!-- Legend Summary -->
+        <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-3 rounded-lg mb-4 text-xs font-semibold">
+            <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-green-500 rounded inline-block"></span> उत्तर दिया (<span id="grid-stat-answered">0</span>)</span>
+            <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-gray-200 border rounded inline-block"></span> अनुत्तरित (<span id="grid-stat-unanswered">0</span>)</span>
+        </div>
+
+        <!-- Full Grid Container -->
+        <div id="full-grid-container" class="grid grid-cols-5 sm:grid-cols-10 gap-2 p-2">
+            <!-- Populated via JS -->
+        </div>
+        
+        <div class="mt-6 border-t pt-4 text-right">
+            <button onclick="toggleGridModal()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700">बंद करें</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Solved Guide Book -->
+<div id="guide-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-4xl w-full p-6 max-h-[85vh] overflow-y-auto shadow-2xl relative">
+        <div class="flex justify-between items-center border-b pb-3 mb-4 sticky top-0 bg-white z-10">
+            <h2 class="text-2xl font-bold text-blue-800">📖 Solved Guide Book (संपूर्ण उत्तर व्याख्या सहित)</h2>
+            <div class="flex items-center gap-3">
+                <button onclick="printGuideBook()" class="px-4 py-1.5 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition flex items-center gap-1.5 text-sm shadow">
+                    <span>🖨️</span> प्रिंट / PDF सहेजें
+                </button>
+                <button onclick="toggleGuideBook()" class="text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+            </div>
+        </div>
+        <div id="guide-content" class="space-y-6">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Results -->
+<div id="result-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-8 text-center max-h-[90vh] overflow-y-auto">
+        <h2 class="text-3xl font-bold text-blue-800 mb-2">परीक्षा परिणाम</h2>
+        <div id="final-score" class="text-5xl font-extrabold text-green-600 my-4">0/0</div>
+        <p id="feedback-text" class="text-lg text-gray-700 mb-6"></p>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-green-100 p-4 rounded">
+                <div class="text-sm text-green-800">सही उत्तर</div>
+                <div id="correct-count" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="bg-red-100 p-4 rounded">
+                <div class="text-sm text-red-800">गलत उत्तर</div>
+                <div id="wrong-count" class="text-2xl font-bold">0</div>
+            </div>
+        </div>
+        
+        <button onclick="location.reload()" class="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700">पुनः प्रयास करें</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        // भाग 1: महाजनपद एवं उनकी राजधानियाँ (1-25)
+        { q: "छठी शताब्दी ईसा पूर्व में सोलह महाजनपदों के उदय का उल्लेख किस बौद्ध ग्रंथ में मिलता है?", a: ["दीघ निकाय", "अंगुत्तर निकाय", "मज्झिम निकाय", "संयुक्त निकाय"], c: 1, topic: "mahajanapada", exp: "अंगुत्तर निकाय बौद्ध ग्रंथ है जिसमें 16 महाजनपदों की स्पष्ट सूची मिलती है।" },
+        { q: "जैन ग्रंथ 'भगवती सूत्र' में कितने महाजनपदों का उल्लेख किया गया है?", a: ["12", "14", "16", "18"], c: 2, topic: "mahajanapada", exp: "जैन ग्रंथ भगवती सूत्र में भी 16 महाजनपदों का उल्लेख है।" },
+        { q: "मगध महाजनपद की प्रारंभिक राजधानी कौन सी थी?", a: ["पाटलिपुत्र", "वैशाली", "राजगृह (गिरिव्रज)", "चंपा"], c: 2, topic: "mahajanapada", exp: "मगध की प्रारंभिक राजधानी राजगृह (गिरिव्रज) थी जो पाँच पहाड़ियों से घिरी थी।" },
+        { q: "उत्तरी अवंती की राजधानी उज्जैनी थी, तो दक्षिणी अवंती की राजधानी कहाँ थी?", a: ["माहिष्मती", "विराटनगर", "कौशाम्बी", "तक्षशिला"], c: 0, topic: "mahajanapada", exp: "अवंती महाजनपद दो भागों में विभाजित था; उत्तरी अवंती की राजधानी उज्जैनी तथा दक्षिणी अवंती की माहिष्मती थी।" },
+        { q: "वत्स महाजनपद की राजधानी निम्नलिखित में से कौन सी थी?", a: ["वाराणसी", "कौशाम्बी", "इंद्रप्रस्थ", "मथुरा"], c: 1, topic: "mahajanapada", exp: "वत्स महाजनपद की राजधानी कौशाम्बी थी।" },
+        { q: "गंधार महाजनपद की राजधानी का नाम क्या था?", a: ["हाटक", "तक्षशिला", "पुष्कलावती", "पोटली"], c: 1, topic: "mahajanapada", exp: "गंधार महाजनपद की राजधानी तक्षशिला थी जो शिक्षा और व्यापार का केंद्र था।" },
+        { q: "चंपा किस महाजनपद की राजधानी थी?", a: ["अंग", "मल्ल", "चेदि", "काशी"], c: 0, topic: "mahajanapada", exp: "अंग महाजनपद की राजधानी चंपा थी।" },
+        { q: "दक्षिण भारत में स्थित एकमात्र महाजनपद कौन सा था?", a: ["कंबोज", "अश्मक", "मत्स्य", "सूरसेन"], c: 1, topic: "mahajanapada", exp: "अश्मक गोदावरी नदी के तट पर दक्षिण भारत में स्थित एकमात्र महाजनपद था।" },
+        { q: "गोदावरी नदी के तट पर स्थित महाजनपद कौन सा था?", a: ["अवंती", "वत्स", "अश्मक", "चेदि"], c: 2, topic: "mahajanapada", exp: "अश्मक महाजनपद गोदावरी नदी घाटी में स्थित था।" },
+        { q: "अश्मक महाजनपद की राजधानी क्या थी?", a: ["पोटन (पोतली)", "विराटनगर", "श्रावस्ती", "हाटक"], c: 0, topic: "mahajanapada", exp: "अश्मक की राजधानी पोटन या पोतली थी।" },
+        { q: "आधुनिक राजस्थान के अलवर, भरतपुर और जयपुर क्षेत्र में कौन सा महाजनपद स्थित था?", a: ["कुरु", "मत्स्य", "सूरसेन", "पांचाल"], c: 1, topic: "mahajanapada", exp: "मत्स्य महाजनपद राजस्थान के आधुनिक जयपुर-अलवर क्षेत्र में था।" },
+        { q: "मत्स्य महाजनपद की राजधानी कौन सी थी?", a: ["विराटनगर", "कौशाम्बी", "इंद्रप्रस्थ", "चंपा"], c: 0, topic: "mahajanapada", exp: "मत्स्य महाजनपद की राजधानी विराटनगर थी।" },
+        { q: "सूरसेन महाजनपद की राजधानी कहाँ थी?", a: ["अहिच्छत्र", "मथुरा", "काम्पिल्य", "साकेत"], c: 1, topic: "mahajanapada", exp: "सूरसेन की राजधानी मथुरा थी।" },
+        { q: "उत्तर पांचाल की राजधानी अहिच्छत्र थी, तो दक्षिण पांचाल की राजधानी कहाँ थी?", a: ["काम्पिल्य", "कौशाम्बी", "श्रावस्ती", "कुशीनारा"], c: 0, topic: "mahajanapada", exp: "उत्तरी पांचाल की अहिच्छत्र और दक्षिणी पांचाल की राजधानी काम्पिल्य थी।" },
+        { q: "कुरु महाजनपद की राजधानी क्या थी?", a: ["इंद्रप्रस्थ", "मिथिला", "वाराणसी", "राजपुर"], c: 0, topic: "mahajanapada", exp: "कुरु महाजनपद की राजधानी इंद्रप्रस्थ थी।" },
+        { q: "चेदि महाजनपद की राजधानी का नाम क्या था?", a: ["सूक्तिमती (सोत्थिवती)", "पोटली", "वैशाली", "वाराणसी"], c: 0, topic: "mahajanapada", exp: "चेदि की राजधानी सूक्तिमती (सोत्थिवती) थी।" },
+        { q: "आधुनिक बुंदेलखंड का क्षेत्र प्राचीन काल में किस महाजनपद के अंतर्गत आता था?", a: ["वत्स", "चेदि", "मल्ल", "पांचाल"], c: 1, topic: "mahajanapada", exp: "बुंदेलखंड क्षेत्र चेदि महाजनपद के अंतर्गत था।" },
+        { q: "कोशल महाजनपद की राजधानी कहाँ थी?", a: ["श्रावस्ती", "कौशाम्बी", "वाराणसी", "वैशाली"], c: 0, topic: "mahajanapada", exp: "कोशल महाजनपद की राजधानी श्रावस्ती थी।" },
+        { q: "प्राचीन काल में सबसे शक्तिशाली और समृद्ध 'काशी' महाजनपद की राजधानी क्या थी?", a: ["वाराणसी", "पाटलिपुत्र", "गया", "साकेत"], c: 0, topic: "mahajanapada", exp: "काशी महाजनपद की राजधानी वाराणसी थी।" },
+        { q: "भारत की उत्तर-पश्चिमी सीमा पर स्थित कंबोज महाजनपद की राजधानी क्या थी?", a: ["हाटक (राजपुर)", "तक्षशिला", "कौशाम्बी", "विराटनगर"], c: 0, topic: "mahajanapada", exp: "कंबोज की राजधानी हाटक या राजपुर थी।" },
+        { q: "निम्नलिखित में से कौन सा महाजनपद आधुनिक बिहार के भागलपुर और मुंगेर जिलों में फैला था?", a: ["अंग", "मगध", "वज्जी", "मल्ल"], c: 0, topic: "mahajanapada", exp: "अंग महाजनपद भागलपुर और मुंगेर के क्षेत्र में था।" },
+        { q: "वज्जी महाजनपद की मुख्य राजधानी कहाँ थी?", a: ["वैशाली", "मिथिला", "जनकपुरी", "कुशीनगर"], c: 0, topic: "mahajanapada", exp: "वज्जी संघ की राजधानी वैशाली थी।" },
+        { q: "मल्ल महाजनपद की राजधानियाँ कौन सी थीं?", a: ["कुशीनारा और पावा", "कौशाम्बी और वैशाली", "श्रावस्ती और साकेत", "अहिच्छत्र और काम्पिल्य"], c: 0, topic: "mahajanapada", exp: "मल्ल महाजनपद की दो राजधानियाँ कुशीनारा और पावा थीं।" },
+        { q: "वर्तमान समय का पूर्वी उत्तर प्रदेश (देवरिया, गोरखपुर क्षेत्र) किस महाजनपद का हिस्सा था?", a: ["मल्ल", "पांचाल", "वत्स", "सूरसेन"], c: 0, topic: "mahajanapada", exp: "यह क्षेत्र मल्ल महाजनपद के अंतर्गत था।" },
+        { q: "महाभारत काल का प्रसिद्ध राजा 'शिशुपाल' किस महाजनपद का शासक था?", a: ["चेदि", "कुरु", "पांचाल", "मत्स्य"], c: 0, topic: "mahajanapada", exp: "शिशुपाल चेदि महाजनपद का प्रसिद्ध राजा था।" },
+
+        // भाग 2: मगध साम्राज्य का उत्कर्ष (26-50)
+        { q: "मगध साम्राज्य पर शासन करने वाला प्रथम ऐतिहासिक राजवंश कौन सा था?", a: ["हर्यक वंश", "शिशुनाग वंश", "नंद वंश", "मौर्य वंश"], c: 0, topic: "magadh", exp: "हर्यक वंश मगध का प्रथम ऐतिहासिक राजवंश था।" },
+        { q: "हर्यक वंश के किस शासक को 'कणिक' या 'कुणिक' भी कहा जाता था?", a: ["बिम्बिसार", "अजातशत्रु", "उदयन", "नागदशक"], c: 1, topic: "magadh", exp: "अजातशत्रु को उसके उपनाम 'कुणिक' से भी जाना जाता है।" },
+        { q: "मगध के किस शासक को 'श्रेणिक' (सेना रखने वाला) कहा जाता था?", a: ["बिम्बिसार", "अजातशत्रु", "महापद्मनंद", "चंद्रगुप्त"], c: 0, topic: "magadh", exp: "बिम्बिसार ने नियमित सेना रखी थी इसलिए उसे 'श्रेणिक' कहा गया।" },
+        { q: "बिम्बिसार ने अपने राजवैद्य 'जीवक' को किस राजा के इलाज के लिए भेजा था?", a: ["कोशल नरेश प्रसेनजित", "अवंती नरेश प्रद्योत", "वत्स नरेश उदयन", "गंधार नरेश पुक्कुसाती"], c: 1, topic: "magadh", exp: "पांडुरोग से ग्रसित अवंती नरेश प्रद्योत के उपचार हेतु जीवक को भेजा गया था।" },
+        { q: "गंगा और सोन नदियों के संगम पर 'पाटलिपुत्र' (कुसुमपुर) नगर की स्थापना किसने की थी?", a: ["अजातशत्रु", "उदयन", "कालाशोक", "महापद्मनंद"], c: 1, topic: "magadh", exp: "उदयन ने पाटलिपुत्र नगर की स्थापना कर इसे राजधानी बनाया।" },
+        { q: "मगध की किस राजधानी को 'चारों ओर से पाँच पहाड़ियों द्वारा घिरा' हुआ माना जाता है?", a: ["पाटलिपुत्र", "वैशाली", "राजगृह", "चंपा"], c: 2, topic: "magadh", exp: "राजगृह (गिरिव्रज) प्राकृतिक रूप से पाँच पहाड़ियों से सुरक्षित था।" },
+        { q: "प्रथम बौद्ध संगीति (483 ईसा पूर्व) का आयोजन मगध के किस शासक के काल में हुआ था?", a: ["बिम्बिसार", "अजातशत्रु", "कालाशोक", "अशोक"], c: 1, topic: "magadh", exp: "अजातशत्रु के संरक्षण में राजगृह में प्रथम बौद्ध संगीति हुई।" },
+        { q: "अजातशत्रु ने वैशाली के वज्जी संघ के खिलाफ युद्ध में किन दो नए हथियारों का प्रयोग किया था?", a: ["रथ मूसल और महाशिलाकंटक", "तोप और बंदूक", "तीर-कमान और भाला", "चक्र और गदा"], c: 0, topic: "magadh", exp: "वज्जी युद्ध में रथ मूसल और महाशिलाकंटक का प्रयोग किया गया था।" },
+        { q: "अजातशत्रु के किस कूटनीतिज्ञ मंत्री ने वज्जी संघ में फूट डालकर मगध की जीत पक्की की थी?", a: ["जीवक", "वस्सकार (वर्षकार)", "कौटिल्य", "उपगुप्त"], c: 1, topic: "magadh", exp: "वस्सकार ने वज्जी संघ में आंतरिक फूट डाली थी।" },
+        { q: "शिशुनाग वंश के किस शासक के समय द्वितीय बौद्ध संगीति वैशाली में आयोजित हुई थी?", a: ["शिशुनाग", "कालाशोक (काकवर्ण)", "नन्दिवर्धन", "महापद्मनंद"], c: 1, topic: "magadh", exp: "कालाशोक के काल में वैशाली में द्वितीय बौद्ध संगीति हुई।" },
+        { q: "किस शासक ने मगध की राजधानी को वैशाली से स्थायी रूप से पाटलिपुत्र स्थानांतरित कर दिया था?", a: ["उदयन", "कालाशोक", "शिशुनाग", "महापद्मनंद"], c: 1, topic: "magadh", exp: "कालाशोक ने वैशाली से पाटलिपुत्र राजधानी पुनः स्थानांतरित की।" },
+        { q: "भारतीय इतिहास में 'सर्वक्षत्रान्तक' (क्षत्रियों का नाश करने वाला) किसे कहा गया है?", a: ["अजातशत्रु", "महापद्मनंद", "घनानंद", "सिकंदर"], c: 1, topic: "magadh", exp: "महापद्मनंद को सर्वक्षत्रान्तक कहा गया है।" },
+        { q: "नंद वंश के किस राजा को पुराणों में 'उग्रसेन' और 'एकराट' की उपाधि दी गई है?", a: ["घनानंद", "महापद्मनंद", "कैवर्त", "भूतपाल"], c: 1, topic: "magadh", exp: "महापद्मनंद को उग्रसेन और एकराट कहा गया है।" },
+        { q: "सिकंदर के भारत आक्रमण (326 ईसा पूर्व) के समय मगध पर किस वंश का शासन था?", a: ["हर्यक वंश", "शिशुनाग वंश", "नंद वंश", "मौर्य वंश"], c: 2, topic: "magadh", exp: "सिकंदर के आक्रमण के समय नंद वंश का शासन था।" },
+        { q: "सिकंदर के समकालीन नंद वंश का अंतिम राजा कौन था?", a: ["महापद्मनंद", "घनानंद", "राष्ट्रपाल", "गोविंदशाणक"], c: 1, topic: "magadh", exp: "घनानंद नंद वंश का अंतिम राजा था।" },
+        { q: "हर्यक वंश को इतिहास में किस अन्य नाम से भी जाना जाता है?", a: ["पितृहंता वंश", "मातृसत्तात्मक वंश", "साम्राज्यवादी वंश", "गणतांत्रिक वंश"], c: 0, topic: "magadh", exp: "इस वंश में पुत्रों द्वारा पिता की हत्या कर गद्दी हथियाने के कारण इसे पितृहंता वंश कहा जाता है।" },
+        { q: "मगध के किस शासक ने अंग महाजनपद को जीतकर अपने राज्य में मिलाया था?", a: ["बिम्बिसार", "अजातशत्रु", "शिशुनाग", "महापद्मनंद"], c: 0, topic: "magadh", exp: "बिम्बिसार ने अंग को जीतकर मगध में मिलाया था।" },
+        { q: "अवंती महाजनपद को मगध साम्राज्य में मिलाने वाला शासक कौन था?", a: ["अजातशत्रु", "शिशुनाग", "महापद्मनंद", "चंद्रगुप्त मौर्य"], c: 1, topic: "magadh", exp: "शिशुनाग ने अवंती को जीतकर मगध साम्राज्य का हिस्सा बनाया था।" },
+        { q: "हाथीगुंफा अभिलेख के अनुसार, कलिंग में 'नहर' का निर्माण किस मगध राजा ने कराया था?", a: ["महापद्मनंद", "अशोक", "बिम्बिसार", "बिंदुसार"], c: 0, topic: "magadh", exp: "नंद राजा द्वारा कलिंग में नहर बनवाने का उल्लेख हाथीगुंफा अभिलेख में है।" },
+        { q: "कूटनीति के लिए प्रसिद्ध 'प्रसेनजित' किस महाजनपद का राजा था?", a: ["कोशल", "वत्स", "अवंती", "मगध"], c: 0, topic: "magadh", exp: "प्रसेनजित कोशल महाजनपद का प्रतापी राजा था।" },
+        { q: "बुद्ध के समकालीन कौशाम्बी का शासक राजा उदयन किस वंश का था?", a: ["हर्यंक", "पौरव (या वत्स वंश)", "इक्ष्वाकु", "प्रद्योत"], c: 1, topic: "magadh", exp: "राजा उदयन पौरव या वत्स राजवंश से संबंधित थे।" },
+        { q: "ग्रीक/यूनानी लेखकों द्वारा घनानंद को क्या नाम दिया गया था?", a: ["अग्रमीज (Xandrames)", "अमित्रघात", "सैंड्रोकोट्टस", "कुणिक"], c: 0, topic: "magadh", exp: "यूनानी स्रोतों में घनानंद को 'अग्रमीज' कहा गया है।" },
+        { q: "नंद वंश का विनाश करने में चंद्रगुप्त मौर्य की सहायता करने वाले चाणक्य कहाँ के आचार्य थे?", a: ["तक्षशिला", "नालंदा", "विक्रमशिला", "वल्लभी"], c: 0, topic: "magadh", exp: "आचार्य चाणक्य तक्षशिला विश्वविद्यालय में आचार्य थे।" },
+        { q: "चेदि वंश का प्रसिद्ध राजा शिशुपाल किसके द्वारा मारा गया था?", a: ["श्री कृष्ण", "बिम्बिसार", "अजातशत्रु", "जरासंध"], c: 0, topic: "magadh", exp: "पौराणिक कथाओं के अनुसार शिशुपाल का वध भगवान श्रीकृष्ण द्वारा हुआ था।" },
+        { q: "मगध के किस शासक ने लिच्छवियों की राजधानी वैशाली को पहली बार जीता था?", a: ["बिम्बिसार", "अजातशत्रु", "उदयन", "महापद्मनंद"], c: 1, topic: "magadh", exp: "अजातशत्रु ने कूटनीति और युद्ध के माध्यम से वैशाली को जीता था।" },
+
+        // भाग 3: सामाजिक, आर्थिक एवं प्रशासनिक व्यवस्था (51-75)
+        { q: "महाजनपद काल में 'श्रेणी' (Guilds) शब्द का प्रयोग किसके लिए किया जाता था?", a: ["राजा के मंत्रियों के लिए", "व्यापारियों और शिल्पकारों के संगठन के लिए", "सैनिकों की टुकड़ी के लिए", "पुजारियों के समूह के लिए"], c: 1, topic: "society", exp: "श्रेणी व्यापारियों और शिल्पकारों की संस्था या संगठन होती थी।" },
+        { q: "पालि ग्रंथों में गाँव के सबसे शक्तिशाली या प्रमुख व्यक्ति को क्या कहा गया है?", a: ["ग्रामभोजक या ग्रामक", "गृहपति", "जेठक", "गामिनी"], c: 0, topic: "society", exp: "गाँव के मुखिया को ग्रामभोजक कहा जाता था।" },
+        { q: "महाजनपद काल में 'गृहपति' शब्द का क्या तात्पर्य था?", a: ["महल का रक्षक", "घर का मुखिया या धनी किसान", "गाँव का चौकीदार", "धार्मिक गुरु"], c: 1, topic: "society", exp: "गृहपति घर के मुख्य स्वामी या धनी किसानों को कहा जाता था।" },
+        { q: "भारत में सबसे पुराने पाए गए सिक्के 'आहत सिक्के' (Punch Marked Coins) मुख्य रूप से किस धातु के बने थे?", a: ["सोना", "चाँदी", "ताँबा", "लोहा"], c: 1, topic: "society", exp: "आहत सिक्के मुख्य रूप से चाँदी के होते थे।" },
+        { q: "महाजनपद काल की अर्थव्यवस्था और कृषि में क्रांति आने का मुख्य कारण क्या था?", a: ["लोहे के हल के फाल का व्यापक उपयोग", "विदेशी व्यापार", "नहरों का निर्माण", "नए बीजों की खोज"], c: 0, topic: "society", exp: "लोहे के व्यापक प्रयोग से कृषि उत्पादन में भारी वृद्धि हुई।" },
+        { q: "धान की खेती में 'रोपणी' (Transplantation) विधि का विकास किस काल में व्यापक रूप से हुआ?", a: ["ऋग्वैदिक काल", "उत्तर वैदिक काल", "महाजनपद काल (बुद्ध काल)", "मौर्य काल"], c: 2, topic: "society", exp: "धान की रोपणी पद्धति बुद्ध काल में कृषि उत्पादन बढ़ाने का प्रमुख साधन बनी।" },
+        { q: "महाजनपद काल में राजा द्वारा वसूला जाने वाला नियमित कर (Tax) क्या कहलाता था?", a: ["बलि", "भाग", "शुल्क", "कर"], c: 1, topic: "society", exp: "कृषि उपज पर लिया जाने वाला कर 'भाग' कहलाता था।" },
+        { q: "किसानों से उनकी उपज का कितना हिस्सा कर या 'भाग' के रूप में लिया जाता था?", a: ["1/2", "1/4", "1/6", "1/10"], c: 2, topic: "society", exp: "उपज का छठा हिस्सा (1/6) कर के रूप में लिया जाता था।" },
+        { q: "व्यापारियों से बिक्री की वस्तुओं पर वसूले जाने वाले कर को क्या कहा जाता था?", a: ["भाग", "शुल्क या चुंगी", "बलि", "हिरण्य"], c: 1, topic: "society", exp: "बिक्री कर या चुंगी को 'शुल्क' कहा जाता था।" },
+        { q: "महाजनपद काल में जो कारीगर या शिल्पकार कर नहीं दे पाते थे, वे राजा के लिए कर कैसे चुकाते थे?", a: ["अनाज देकर", "महीने में एक दिन मुफ्त श्रम (काम) करके", "मवेशी देकर", "अपनी जमीन देकर"], c: 1, topic: "society", exp: "शिल्पकार महीने में एक दिन श्रमदान या मुफ्त काम करके कर चुकाते थे।" },
+        { q: "'कषापण' या 'कारषापण' क्या था?", a: ["एक प्रकार का वस्त्र", "महाजनपद काल का एक प्रमुख सिक्का", "राजा का एक अधिकारी", "एक धार्मिक अनुष्ठान"], c: 1, topic: "society", exp: "कारषापण महाजनपद काल का प्रचलित आहत सिक्का था।" },
+        { q: "'द्वितीय नगरीकरण' (Second Urbanization) का संबंध भारतीय इतिहास के किस काल से है?", a: ["सिंधु घाटी सभ्यता", "वैदिक काल", "बुद्ध काल / महाजनपद काल", "गुप्त काल"], c: 2, topic: "society", exp: "महाजनपद काल को भारत का द्वितीय नगरीकरण कहा जाता है।" },
+        { q: "महाजनपद काल की मृदभांड (Pottery) संस्कृति की मुख्य विशेषता क्या थी?", a: ["चित्रित धूसर मृदभांड (PGW)", "उत्तरी काले चमकीले मृदभांड (NBPW)", "लाल और काले मृदभांड", "गेरुए रंग के मृदभांड"], c: 1, topic: "society", exp: "NBPW (Northern Black Polished Ware) इस काल की प्रमुख मृदभांड संस्कृति थी।" },
+        { q: "सोलह महाजनपदों में से कितने महाजनपदों में राजतंत्रात्मक शासन व्यवस्था थी?", a: ["12", "14", "16", "10"], c: 1, topic: "society", exp: "14 महाजनपदों में राजतंत्र और 2 में गणतंत्र व्यवस्था थी।" },
+        { q: "वज्जी और मल्ल महाजनपदों में किस प्रकार की शासन प्रणाली थी?", a: ["राजतंत्र (Monarchy)", "गणतंत्र या संघ (Oligarchy/Gana)", "तानाशाही", "सैन्य शासन"], c: 1, topic: "society", exp: "वज्जी और मल्ल गणतांत्रिक संघ थे।" },
+        { q: "गणतंत्र राज्यों में शासन करने वाली मुख्य सभा या परिषद को क्या कहा जाता था?", a: ["संथागार", "समिति", "सभा", "परिषद"], c: 0, topic: "society", exp: "गणतांत्रिक प्रशासनिक बैठकों की सभा 'संथागार' कहलाती थी।" },
+        { q: "महाजनपद काल में श्रेणी के प्रमुख या अध्यक्ष को क्या कहा जाता था?", a: ["जेठक या श्रेष्ठिन (सेठ)", "भोजक", "गृहपति", "गामिनी"], c: 0, topic: "society", exp: "श्रेणी के प्रधान को जेठक या श्रेष्ठिन कहा जाता था।" },
+        { q: "भूमि मापने वाले अधिकारी को इस काल में क्या कहा जाता था?", a: ["रज्जुक या रज्जूग्राहक", "भागदुघ", "संहर्ता", "शौल्किक"], c: 0, topic: "society", exp: "रज्जुक या रज्जूग्राहक भूमि पैमाइश करने वाले अधिकारी थे।" },
+        { q: "व्यापारियों के काफिले (Caravan) के नेता को क्या कहा जाता था?", a: ["सार्थवाह", "जेठक", "सार्थ", "भोजक"], c: 0, topic: "society", exp: "व्यापारिक काफिले के प्रमुख को 'सार्थवाह' कहा जाता था।" },
+        { q: "महाजनपद काल में कर वसूलने वाले अधिकारी को क्या कहा जाता था?", a: ["बलिसाधक या द्रोणमापक", "अक्षपटलिक", "महामात्र", "सेनापति"], c: 0, topic: "society", exp: "बलिसाधक और द्रोणमापक कर संग्रहण से जुड़े अधिकारी थे।" },
+        { q: "'तक्षशिला' किन दो नदियों के बीच स्थित एक प्रमुख व्यापारिक और शिक्षा का केंद्र था?", a: ["सिंधु और झेलम", "झेलम और चेनाब", "गंगा और यमुना", "ब्यास और रावी"], c: 0, topic: "society", exp: "तक्षशिला सिंधु और झेलम नदियों के मध्य स्थित थी।" },
+        { q: "महाजनपद काल में समाज में 'दासों' की स्थिति के बारे में क्या सत्य है?", a: ["दासों को कृषि कार्यों में बड़े पैमाने पर लगाया जाने लगा", "दास केवल घरेलू काम करते थे", "दासों को संपत्ति रखने का अधिकार था", "इस काल में दास प्रथा समाप्त हो गई थी"], c: 0, topic: "society", exp: "इस काल में उत्पादन बढ़ने के साथ दासों को कृषि व उत्पादन कार्यों में लगाया गया।" },
+        { q: "वज्जी संघ कितने गणराज्यों या कुलों का एक संघ था?", a: ["4", "6", "8", "10"], c: 2, topic: "society", exp: "वज्जी संघ 8 कुल संघों (जैसे लिच्छवि, विदेह आदि) से मिलकर बना था।" },
+        { q: "लिच्छवि गणराज्य के शासक अपने आप को क्या कहते थे?", a: ["राजा", "सम्राट", "देवपुत्र", "नायक"], c: 0, topic: "society", exp: "संथागार के प्रत्येक कुलीन सदस्य को राजा की उपाधि प्राप्त थी।" },
+        { q: "महाजनपद काल में लंबी दूरी के व्यापार के लिए प्रसिद्ध 'उत्तरापथ' कहाँ से कहाँ तक जाता था?", a: ["ताम्रलिप्ति से तक्षशिला", "कौशाम्बी से उज्जैन", "पाटलिपुत्र से भड़ौच", "वाराणसी से पुरी"], c: 0, topic: "society", exp: "उत्तरापथ प्राचीन भारत का प्रमुख व्यापारिक मार्ग था जो पूर्व के ताम्रलिप्ति बंदरगाह से उत्तर-पश्चिम में तक्षशिला तक जाता था।" },
+
+        // भाग 4: विदेशी आक्रमण, कूटनीति एवं विविध (76-100)
+        { q: "भारत पर आक्रमण करने वाला प्रथम विदेशी साम्राज्य कौन सा था?", a: ["ईरान का हखामनी (Achaemenid) वंश", "यूनान का मकदूनियाई वंश", "कुषाण वंश", "शक वंश"], c: 0, topic: "foreign", exp: "हखामनी वंश ने सबसे पहले उत्तर-पश्चिम भारत पर आक्रमण किया था।" },
+        { q: "भारत पर आक्रमण करने वाला पहला ईरानी शासक कौन था?", a: ["सायरस (Cyrus)", "डेरियस प्रथम (दाराबाहु)", "जेरेक्सेस (क्षयार्ष)", "सिकंदर"], c: 1, topic: "foreign", exp: "दारा प्रथम (डेरियस प्रथम) ने 516 ईसा पूर्व में भारतीय भूभाग पर अधिकार किया था।" },
+        { q: "ईरानियों के संपर्क के कारण भारत के उत्तर-पश्चिम भाग में किस लिपि का विकास हुआ?", a: ["ब्राह्मी लिपि", "खरोष्ठी लिपि", "देवनागरी लिपि", "शारदा लिपि"], c: 1, topic: "foreign", exp: "खरोष्ठी लिपि फारसी अरामामी लिपि से विकसित हुई जो दाएं से बाएं लिखी जाती थी।" },
+        { q: "सिकंदर (Alexander) कहाँ का शासक था?", a: ["मकदूनिया (Macedonia)", "स्पार्टा", "एथेंस", "मिस्र"], c: 0, topic: "foreign", exp: "सिकंदर मकदूनिया का महान शासक था।" },
+        { q: "सिकंदर ने भारत पर किस वर्ष आक्रमण किया था?", a: ["326 ईसा पूर्व", "323 ईसा पूर्व", "261 ईसा पूर्व", "305 ईसा पूर्व"], c: 0, topic: "foreign", exp: "सिकंदर ने 326 ईसा पूर्व में भारत पर आक्रमण किया था।" },
+        { q: "'हाईडेस्पीज' (Hydaspes) या 'वितस्ता का युद्ध' किनके बीच लड़ा गया था?", a: ["सिकंदर और पोरस (पुरु)", "चंद्रगुप्त और सेल्यूकस", "सिकंदर और अंभी", "घनानंद और सिकंदर"], c: 0, topic: "foreign", exp: "यह प्रसिद्ध युद्ध सिकंदर और पोरस के मध्य झेलम नदी के तट पर हुआ था।" },
+        { q: "राजा पोरस का राज्य किन दो नदियों के बीच स्थित था?", a: ["झेलम और चेनाब", "सिंधु और झेलम", "चेनाब और रावी", "ब्यास और सतलज"], c: 0, topic: "foreign", exp: "पोरस का राज्य झेलम (वितस्ता) और चेनाब (असिकनी) नदियों के मध्य था।" },
+        { q: "सिकंदर के आक्रमण के समय किस भारतीय राजा ने बिना लड़े ही आत्मसमर्पण कर दिया और उसकी सहायता की?", a: ["तक्षशिला का राजा अंभी", "राजा पोरस", "चंद्रगुप्त मौर्य", "घनानंद"], c: 0, topic: "foreign", exp: "तक्षशिला नरेश अंभी ने स्वेच्छा से सिकंदर के सामने आत्मसमर्पण कर दिया था।" },
+        { q: "सिकंदर की सेना ने किस नदी को पार करने से साफ मना कर दिया था, जिसके बाद सिकंदर को वापस लौटना पड़ा?", a: ["झेलम", "ब्यास (Hypanis)", "रावी", "सिंधु"], c: 1, topic: "foreign", exp: "थकी हुई सिकंदर की सेना ने ब्यास नदी पार करने से इंकार कर दिया था।" },
+        { q: "सिकंदर की मृत्यु 323 ईसा पूर्व में कहाँ हुई थी?", a: ["बेबीलोन", "सुसा", "मकदूनिया", "तक्षशिला"], c: 0, topic: "foreign", exp: "वापस लौटते समय बेबीलोन में सिकंदर की मृत्यु हो गई थी।" },
+        { q: "सिकंदर के साथ भारत आने वाला प्रसिद्ध इतिहासकार/लेखक कौन था?", a: ["नियार्कस और अनेसिब्रिटस", "मेगस्थनीज", "डाइमेकस", "फाह्यान"], c: 0, topic: "foreign", exp: "नियार्कस, अनेसिब्रिटस और एरिस्टोबुलस सिकंदर के साथ आए थे।" },
+        { q: "सिकंदर के जलसेना अध्यक्ष (Naval Commander) का नाम क्या था?", a: ["सेल्यूकस निकेटर", "नियार्कस", "फिलिप", "थॉमस"], c: 1, topic: "foreign", exp: "नियार्कस सिकंदर का नौसेना प्रमुख था।" },
+        { q: "कंबोज महाजनपद अपने उत्कृष्ट किस पशु के लिए प्राचीन काल में बहुत प्रसिद्ध था?", a: ["हाथी", "घोड़े", "गाय", "ऊँट"], c: 1, topic: "foreign", exp: "कंबोज अपने श्रेष्ठ नस्ल के घोड़ों के लिए जाना जाता था।" },
+        { q: "कौटिल्य ने अपने अर्थशास्त्र में कंबोज के लोगों को क्या कहा है?", a: ["वार्ताशस्त्रोपजीवी (कृषि, व्यापार और शस्त्र से जीविका चलाने वाले)", "केवल योद्धा", "दास", "लुटेरे"], c: 0, topic: "foreign", exp: "कंबोजवासियों को वार्ताशस्त्रोपजीवी कहा गया है।" },
+        { q: "मगध साम्राज्य की सफलता का मुख्य भौगोलिक कारण क्या था?", a: ["इसके पास लोहे की प्रचुर खदानें (झारखंड क्षेत्र) और हाथियों की उपलब्धता थी", "यह मरुस्थल से घिरा था", "यहाँ कोई नदी नहीं थी", "इसके राजा युद्ध विरोधी थे"], c: 0, topic: "foreign", exp: "प्रचुर लोहे की खानों से हथियार बनाना और सेना में हाथियों की संख्या मगध की ताकत थी।" },
+        { q: "अवंती महाजनपद के राजा प्रद्योत को इतिहास में किस नाम से भी जाना जाता है?", a: ["चंड प्रद्योत", "उग्र प्रद्योत", "महा प्रद्योत", "प्रसेन प्रद्योत"], c: 0, topic: "foreign", exp: "अपनी आक्रामक प्रवृत्ति के कारण राजा प्रद्योत 'चंड प्रद्योत' कहलाते थे।" },
+        { q: "बुद्ध काल में अवंती और मगध के बीच लंबे संघर्ष का मुख्य कारण क्या था?", a: ["लौह खदानों वाले क्षेत्रों पर नियंत्रण", "धार्मिक मतभेद", "विवाह संबंध", "सिल्क रूट पर नियंत्रण"], c: 0, topic: "foreign", exp: "लौह अयस्क और खनिज बहुल क्षेत्रों पर वर्चस्व इस संघर्ष का कारण था।" },
+        { q: "वैशाली के लिच्छवि किस प्रसिद्ध क्षत्रिय वंश या जाति से संबंधित थे?", a: ["शाक्य", "ज्ञातृक", "मौर्य", "वज्जी"], c: 3, topic: "foreign", exp: "वैशाली के लिच्छवि वज्जी महासंघ के सबसे प्रमुख अंग थे।" },
+        { q: "महात्मा बुद्ध ने अपना अंतिम वर्षाकाल (Rainy Season) कहाँ बिताया था?", a: ["वैशाली", "कुशीनगर", "श्रावस्ती", "सारनाथ"], c: 0, topic: "foreign", exp: "बुद्ध ने अपना अंतिम वर्षाकाल वैशाली में बिताया था।" },
+        { q: "महात्मा बुद्ध का महापरिनिर्वाण (मृत्यु) किस महाजनपद में हुआ था?", a: ["मल्ल महाजनपद (कुशीनारा)", "मगध", "कोशल", "वज्जी"], c: 0, topic: "foreign", exp: "मल्ल महाजनपद की राजधानी कुशीनारा में बुद्ध का महापरिनिर्वाण हुआ।" },
+        { q: "बुद्ध काल में सबसे बड़ा और सबसे शक्तिशाली गणराज्य कौन सा था?", a: ["वैशाली का लिच्छवि गणराज्य", "कपिलवस्तु का शाक्य गणराज्य", "पावा का मल्ल गणराज्य", "रामग्राम का कोलिय गणराज्य"], c: 0, topic: "foreign", exp: "वैशाली का लिच्छवि गणराज्य बुद्ध काल का सबसे बड़ा और शक्तिशाली गणराज्य था।" },
+        { q: "प्रसिद्ध व्याकरणविद् 'पाणिनी' (अष्टाध्यायी के लेखक) किस काल के समकालीन माने जाते हैं?", a: ["ऋग्वैदिक काल", "उत्तर वैदिक काल", "महाजनपद काल (नंद काल)", "गुप्त काल"], c: 2, topic: "foreign", exp: "पाणिनी महाजनपद/नंद काल के समकालीन संस्कृत व्याकरण के आचार्य थे।" },
+        { q: "सिकंदर के आक्रमण का भारत पर क्या प्रभाव पड़ा?", a: ["भारत और यूनान के बीच प्रत्यक्ष संपर्क स्थापित हुआ और नए जल-थल मार्ग खुले", "मौर्य साम्राज्य का पतन हो गया", "भारत में बौद्ध धर्म समाप्त हो गया", "भारत पूरी तरह से यूनान का गुलाम बन गया"], c: 0, topic: "foreign", exp: "इस आक्रमण से भारत-यूनान के बीच व्यापारिक और सांस्कृतिक मार्ग खुले।" },
+        { q: "विंध्य पर्वत शृंखला के दक्षिण में स्थित एकमात्र महाजनपद कौन सा था?", a: ["अवंती", "अश्मक", "चेदि", "मत्स्य"], c: 1, topic: "foreign", exp: "अश्मक महाजनपद गोदावरी नदी घाटी में विंध्य के दक्षिण में स्थित था।" },
+        { q: "मगध साम्राज्य का अंतिम रूप से विस्तार कर किस मौर्य शासक ने लगभग पूरे भारत को एक सूत्र में पिरोया?", a: ["चंद्रगुप्त मौर्य", "बिंदुसार", "सम्राट अशोक", "बृहद्रथ"], c: 2, topic: "foreign", exp: "सम्राट अशोक ने मगध साम्राज्य की सीमाओं को चरम विस्तार दिया।" }
+    ];
+
+    let currentQ = 0;
+    let answers = new Array(questions.length).fill(null);
+    let timeLeft = 7200; // 120 minutes (120 * 60 seconds)
+    let currentMode = 'practice';
+    let currentLang = 'hi';
+    let filteredQuestions = [...Array(questions.length).keys()];
+
+    function init() {
+        showQuestion(0);
+        startTimer();
+        buildGuideBook();
+        renderInlineFullGrid();
+    }
+
+    function toggleGridModal() {
+        const modal = document.getElementById('grid-modal');
+        modal.classList.toggle('hidden');
+        if(!modal.classList.contains('hidden')) {
+            renderFullGrid();
+        }
+    }
+
+    function renderFullGrid() {
+        const container = document.getElementById('full-grid-container');
+        container.innerHTML = '';
+        filteredQuestions.forEach((qIdx, displayIndex) => {
+            const isAnswered = answers[qIdx] !== null;
+            const btn = document.createElement('button');
+            btn.innerText = qIdx + 1;
+            btn.className = `h-11 rounded font-bold text-sm border transition flex items-center justify-center ${
+                qIdx === currentQ ? 'ring-2 ring-indigo-600 ring-offset-1 ' : ''
+            }${isAnswered ? 'bg-green-500 text-white border-green-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'}`;
+            btn.onclick = () => {
+                showQuestion(qIdx);
+                toggleGridModal();
+            };
+            container.appendChild(btn);
+        });
+        updateGridModalStats();
+    }
+
+    function renderInlineFullGrid() {
+        const container = document.getElementById('inline-full-grid-container');
+        if (!container) return;
+        container.innerHTML = '';
+        filteredQuestions.forEach((qIdx) => {
+            const isAnswered = answers[qIdx] !== null;
+            const btn = document.createElement('button');
+            btn.innerText = qIdx + 1;
+            btn.className = `h-9 rounded font-bold text-xs border transition flex items-center justify-center ${
+                qIdx === currentQ ? 'ring-2 ring-indigo-600 ring-offset-1 ' : ''
+            }${isAnswered ? 'bg-green-500 text-white border-green-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'}`;
+            btn.onclick = () => showQuestion(qIdx);
+            container.appendChild(btn);
+        });
+        updateGridModalStats();
+    }
+
+    function updateGridModalStats() {
+        const answeredCount = answers.filter(a => a !== null).length;
+        const unansweredCount = questions.length - answeredCount;
+        
+        const ansEl = document.getElementById('grid-stat-answered');
+        const unansEl = document.getElementById('grid-stat-unanswered');
+        if(ansEl) ansEl.innerText = answeredCount;
+        if(unansEl) unansEl.innerText = unansweredCount;
+
+        const inlineAnsEl = document.getElementById('inline-grid-stat-answered');
+        const inlineUnansEl = document.getElementById('inline-grid-stat-unanswered');
+        if(inlineAnsEl) inlineAnsEl.innerText = answeredCount;
+        if(inlineUnansEl) inlineUnansEl.innerText = unansweredCount;
+    }
+
+    function showQuestion(index) {
+        currentQ = index;
+        const qData = questions[index];
+        const view = document.getElementById('question-view');
+        
+        let optionsHtml = qData.a.map((opt, i) => `
+            <div class="mb-3">
+                <input type="radio" name="option" id="opt${i}" class="option-input hidden" value="${i}" ${answers[index] === i ? 'checked' : ''} onchange="onOptionSelected(${i})">
+                <label for="opt${i}" class="option-label block p-3 md:p-4 rounded-lg hover:bg-gray-50">
+                    <span class="font-bold mr-2">${String.fromCharCode(65 + i)}.</span> ${opt}
+                </label>
+            </div>
+        `).join('');
+
+        let explanationHtml = '';
+        if (currentMode === 'practice' && answers[index] !== null) {
+            const isCorrect = answers[index] === qData.c;
+            explanationHtml = `
+                <div class="mt-6 p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-300 text-green-800' : 'bg-red-50 border-red-300 text-red-800'}">
+                    <div class="font-bold mb-1">${isCorrect ? '✔ सही उत्तर!' : '✖ गलत उत्तर। सही उत्तर है: ' + String.fromCharCode(65 + qData.c) + '. ' + qData.a[qData.c]}</div>
+                    <p class="text-sm mt-2 text-gray-700"><strong>विस्तृत वर्णन (Explanation):</strong> ${qData.exp}</p>
+                </div>
+            `;
+        }
+
+        view.innerHTML = `
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-sm font-bold text-blue-600">प्रश्न संख्या: ${index + 1} / ${questions.length}</div>
+                <span class="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600 uppercase">Topic: ${qData.topic}</span>
+            </div>
+            <h2 class="text-lg md:text-xl font-medium mb-6">${qData.q}</h2>
+            <div class="space-y-2">${optionsHtml}</div>
+            ${explanationHtml}
+        `;
+
+        document.getElementById('prev-btn').disabled = index === 0;
+        document.getElementById('next-btn').innerText = index === questions.length - 1 ? 'सहेजें और समाप्त' : 'सहेजें और अगला';
+        renderInlineFullGrid();
+    }
+
+    function onOptionSelected(val) {
+        answers[currentQ] = val;
+        updateGridModalStats();
+        renderInlineFullGrid();
+        if(currentMode === 'practice') {
+            showQuestion(currentQ);
+        }
+    }
+
+    function saveAndNext() {
+        if (currentQ < questions.length - 1) {
+            showQuestion(currentQ + 1);
+        } else {
+            showConfirm();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQ > 0) showQuestion(currentQ - 1);
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        if(mode === 'practice') {
+            document.getElementById('mode-practice-btn').className = "px-3 py-1 bg-blue-600 text-white rounded font-medium shadow-sm transition";
+            document.getElementById('mode-cbt-btn').className = "px-3 py-1 bg-gray-200 text-gray-700 rounded font-medium hover:bg-gray-300 transition";
+        } else {
+            document.getElementById('mode-cbt-btn').className = "px-3 py-1 bg-blue-600 text-white rounded font-medium shadow-sm transition";
+            document.getElementById('mode-practice-btn').className = "px-3 py-1 bg-gray-200 text-gray-700 rounded font-medium hover:bg-gray-300 transition";
+        }
+        showQuestion(currentQ);
+    }
+
+    function changeLanguage(lang) {
+        currentLang = lang;
+        if(lang === 'en') {
+            alert("Language switched to English (Note: Content is in Hindi as per MPESB standard curriculum).");
+        }
+    }
+
+    function filterTopic(topic) {
+        if(topic === 'all') {
+            filteredQuestions = [...Array(questions.length).keys()];
+        } else {
+            filteredQuestions = [];
+            questions.forEach((q, idx) => {
+                if(q.topic === topic) filteredQuestions.push(idx);
+            });
+        }
+        renderInlineFullGrid();
+        if(filteredQuestions.length > 0) showQuestion(filteredQuestions[0]);
+    }
+
+    function searchQuestion(query) {
+        if(!query.trim()) {
+            filteredQuestions = [...Array(questions.length).keys()];
+        } else {
+            filteredQuestions = [];
+            questions.forEach((q, idx) => {
+                if(q.q.toLowerCase().includes(query.toLowerCase())) filteredQuestions.push(idx);
+            });
+        }
+        renderInlineFullGrid();
+        if(filteredQuestions.length > 0) showQuestion(filteredQuestions[0]);
+    }
+
+    function toggleGuideBook() {
+        const modal = document.getElementById('guide-modal');
+        modal.classList.toggle('hidden');
+    }
+
+    function printGuideBook() {
+        const guideContentHtml = document.getElementById('guide-content').innerHTML;
+        const printWindow = window.open('', '_blank', 'width=900,height=700');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="hi">
+            <head>
+                <meta charset="UTF-8">
+                <title>MPESB Solved Guide Book - Mahajanapada History</title>
+                <script src="https://cdn.tailwindcss.com"><\/script>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #111; background: #fff; }
+                    .guide-header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #1a5f7a; padding-bottom: 15px; }
+                    @media print {
+                        body { -webkit-print-color-adjust: exact; }
+                        button { display: none !important; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="guide-header">
+                    <h1 class="text-2xl font-bold text-[#1a5f7a]">MPESB MPTET Varg 2 - Social Science</h1>
+                    <h2 class="text-lg font-semibold text-gray-700">महाजनपद काल - Solved Guide Book</h2>
+                    <p class="text-xs text-gray-500 mt-1">विस्तृत व्याख्या सहित पूर्ण अध्ययन सामग्री (100 प्रश्न)</p>
+                </div>
+                <div class="space-y-6">
+                    ${guideContentHtml}
+                </div>
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => { window.print(); }, 500);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+
+    function buildGuideBook() {
+        const guideContainer = document.getElementById('guide-content');
+        guideContainer.innerHTML = '';
+        questions.forEach((q, idx) => {
+            const item = document.createElement('div');
+            item.className = 'border-b pb-4 mb-4';
+            item.innerHTML = `
+                <div class="font-bold text-gray-800 mb-1">प्रश्न ${idx + 1}: ${q.q}</div>
+                <div class="text-green-700 font-semibold text-sm mb-1">सही उत्तर: ${String.fromCharCode(65 + q.c)}. ${q.a[q.c]}</div>
+                <div class="text-gray-600 text-sm bg-gray-50 p-3 rounded"><strong>विस्तृत वर्णन:</strong> ${q.exp}</div>
+            `;
+            guideContainer.appendChild(item);
+        });
+    }
+
+    function startTimer() {
+        const timerEl = document.getElementById('timer');
+        const interval = setInterval(() => {
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            timerEl.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                submitExam();
+            }
+            timeLeft--;
+        }, 1000);
+    }
+
+    function showConfirm() {
+        const unanswered = answers.filter(a => a === null).length;
+        const confirmBox = document.createElement('div');
+        confirmBox.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4';
+        confirmBox.innerHTML = `
+            <div class="bg-white rounded-lg p-6 max-w-md w-full text-center shadow-xl">
+                <h3 class="text-xl font-bold mb-3 text-gray-800">परीक्षा सबमिट करें</h3>
+                <p class="text-gray-600 mb-6">आपने ${questions.length - unanswered} प्रश्नों के उत्तर दिए हैं। क्या आप परीक्षा समाप्त करना चाहते हैं?</p>
+                <div class="flex justify-center gap-4">
+                    <button id="cancel-sub" class="px-5 py-2 bg-gray-300 rounded font-medium hover:bg-gray-400">रद्द करें</button>
+                    <button id="confirm-sub" class="px-5 py-2 bg-red-600 text-white rounded font-medium hover:bg-red-700">हाँ, सबमिट करें</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(confirmBox);
+        document.getElementById('cancel-sub').onclick = () => confirmBox.remove();
+        document.getElementById('confirm-sub').onclick = () => {
+            confirmBox.remove();
+            submitExam();
+        };
+    }
+
+    function submitExam() {
+        let correct = 0;
+        let wrong = 0;
+        
+        questions.forEach((q, i) => {
+            if (answers[i] === q.c) {
+                correct++;
+            } else if (answers[i] !== null) {
+                wrong++;
+            }
+        });
+
+        document.getElementById('final-score').innerText = `${correct} / ${questions.length}`;
+        document.getElementById('correct-count').innerText = correct;
+        document.getElementById('wrong-count').innerText = wrong;
+        
+        let feedback = "";
+        if (correct >= (questions.length * 0.8)) feedback = "उत्कृष्ट प्रदर्शन! आप MPESB परीक्षा के लिए पूरी तरह तैयार हैं।";
+        else if (correct >= (questions.length * 0.5)) feedback = "अच्छा प्रयास। थोड़ा और अभ्यास आपको शीर्ष पर ले जा सकता है।";
+        else feedback = "आपको फिर से अध्ययन करने की आवश्यकता है। घबराएं नहीं, पुनः प्रयास करें।";
+        
+        document.getElementById('feedback-text').innerText = feedback;
+        document.getElementById('result-modal').classList.remove('hidden');
+    }
+
+    init();
+</script>
+
+</body>
+</html>
